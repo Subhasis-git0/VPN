@@ -12,7 +12,27 @@ def serialize_private_key(private_key):
         format=serialization.PrivateFormat.SubjectPublicKeyInfo
     )
 
+
 def load_private_key(pem_data):
     return serialization.load_pem_private_key(pem_data, password=None)
 
 
+def encrypt_with_public_key(public_key, message):
+    return public_key.encrypt(
+        message,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+
+def decrypt_with_private_key(private_key, ciphertext):
+    return private_key.decrypt(
+        ciphertext,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
