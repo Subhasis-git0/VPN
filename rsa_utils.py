@@ -13,8 +13,19 @@ def serialize_private_key(private_key):
     )
 
 
+def serialize_public_key(public_key):
+    return public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+
 def load_private_key(pem_data):
     return serialization.load_pem_private_key(pem_data, password=None)
+
+
+def load_public_key(pem_data):
+    return serialization.load_pem_public_key(pem_data)
 
 
 def encrypt_with_public_key(public_key, message):

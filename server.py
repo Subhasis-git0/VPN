@@ -1,7 +1,8 @@
 import socket 
 import threading
 from encryption import encrypt, decrypt
-from rsa_utils import decrypt_with_private_key, generate_keys, serialize_private_key, load_private_key
+from cryptography.fernet import Fernet
+from rsa_utils import decrypt_with_private_key, generate_keys, serialize_public_key, load_private_key
 
 private_key, public_key = generate_keys()
 
@@ -10,7 +11,7 @@ def handle_client(client_socket, addr):
     print('connected:', addr)
 
     try: 
-        client_socket.send(serialize_private_key(public_key))
+        client_socket.send(serialize_public_key(public_key))
 
         encrypted_key = client_socket.recv(1024)
         session_key = decrypt_with_private_key(private_key, encrypted_key)
@@ -21,7 +22,7 @@ def handle_client(client_socket, addr):
         request = cipher.decrypt(encrypted_data)
 
 
-        remote = socket.socket(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         remote.connect(('example.com', 80))
         remote.send(request)
 

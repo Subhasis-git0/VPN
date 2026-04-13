@@ -13,10 +13,12 @@ session_key = Fernet.generate_key()
 
 encrypted_key = encrypt_with_public_key(public_key, session_key)
 
+client.send(encrypted_key)
+
 cipher = Fernet(session_key)
 
 
-http_request = http_request = b"""GET / HTTP/1.1\r
+http_request = b"""GET / HTTP/1.1\r
 Host: example.com\r
 User-Agent: Mozilla/5.0\r
 Accept: text/html\r
