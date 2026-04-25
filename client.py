@@ -4,7 +4,7 @@ from cryptography.fernet import Fernet
 from rsa_utils import load_public_key, encrypt_with_public_key
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('10.80.17.237',8080))
+client.connect(('10.80.17.237', 9191))
 
 public_key_data = client.recv(2048)
 public_key = load_public_key(public_key_data)
