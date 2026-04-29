@@ -6,25 +6,33 @@ from rsa_utils import decrypt_with_private_key, generate_keys, serialize_public_
 
 private_key, public_key = generate_keys()
 
+stats = {
+    "connections": 0,
+    "data": 0
+}
 
 def handle_client(client_socket, addr):
-    print('connected:', addr)
+    print("Client connected:", addr)
 
-    try: 
-        client_socket.send(serialize_public_key(public_key))
+    try:
+        # Send the server's public key first, then receive the encrypted session key.
+        client_socket.sendall(serialize_public_key(public_key))
+        print("Sent public key to client")
 
         encrypted_key = client_socket.recv(1024)
         session_key = decrypt_with_private_key(private_key, encrypted_key)
+        print("Received encrypted session key")
 
         cipher = Fernet(session_key)
 
         encrypted_data = client_socket.recv(4096)
         request = cipher.decrypt(encrypted_data)
+        print("Received and decrypted client request")
 
 
         remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         remote.connect(('example.com', 80))
-        remote.send(request)
+        remote.sendall(request)
 
         response = b""
         while True:
@@ -33,7 +41,7 @@ def handle_client(client_socket, addr):
                 break
             response += chuck
 
-        client_socket.send(cipher.encrypt(response))
+        client_socket.sendall(cipher.encrypt(response))
         remote.close()
         client_socket.close()
 
@@ -43,10 +51,10 @@ def handle_client(client_socket, addr):
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(('0.0.0.0', 8080))
+server.bind(('0.0.0.0', 9191))
 server.listen(5)
 
-print('VPN server running...')
+print('VPN server running on port 9191...')
 
 while True:
     client_socket, addr = server.accept()

@@ -13,22 +13,19 @@ session_key = Fernet.generate_key()
 
 encrypted_key = encrypt_with_public_key(public_key, session_key)
 
-client.send(encrypted_key)
+print("Sending request...")
+
+client.sendall(encrypted_key)
 
 cipher = Fernet(session_key)
 
+http_request = b"""GET / HTTP/1.1\r\nHost: example.com\r\nUser-Agent: Mozilla/5.0\r\nAccept: text/html\r\nConnection: close\r\n\r\n"""
 
-http_request = b"""GET / HTTP/1.1\r
-Host: example.com\r
-User-Agent: Mozilla/5.0\r
-Accept: text/html\r
-Connection: close\r
-\r
-"""
-
-client.send(cipher.encrypt(http_request))
+client.sendall(cipher.encrypt(http_request))
 
 response = client.recv(4096)
+
+print("Received encrypted response:", response)
 
 data = cipher.decrypt(response)
 
