@@ -90,13 +90,17 @@ Dashboard
 This project is a proxy-based VPN demonstration and not a full system-level VPN like:
 
 OpenVPN
+
 WireGuard
 
 Current limitations:
 
 HTTP request-based communication
+
 No full packet routing
+
 No UDP support
+
 No system-wide traffic tunneling
 
 
