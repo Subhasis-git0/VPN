@@ -36,29 +36,31 @@ The client decrypts and displays the response securely.
 --------------------Architecture------------------------
 
 Client Device
+
       ↓
+      
 Encrypted HTTP Request
+
       ↓
+      
 Ngrok Public Tunnel
+
       ↓
+      
 VPN Server (Kali Linux)
+
       ↓
+      
 Target Website (example.com)
+
       ↓
+      
 Encrypted Response Back
+
       ↓
+      
 Client Device
 
-------------------Project Structure-----------------------
-
-VPN/
-│
-├── server.py          # VPN server
-├── client.py          # VPN client
-├── rsa_utils.py       # RSA encryption utilities
-├── encryption.py      # AES encryption functions
-├── requirements.txt   # Dependencies
-└── README.md
 
 -------------------Installation-----------------------------
 
