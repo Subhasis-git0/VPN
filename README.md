@@ -33,35 +33,6 @@ The client sends encrypted HTTP requests.
 The server decrypts the request, forwards it to the target website, receives the response, encrypts it again, and sends it back to the client.
 The client decrypts and displays the response securely.
 
---------------------Architecture------------------------
-
-Client Device
-
-      ↓
-      
-Encrypted HTTP Request
-
-      ↓
-      
-Ngrok Public Tunnel
-
-      ↓
-      
-VPN Server (Kali Linux)
-
-      ↓
-      
-Target Website (example.com)
-
-      ↓
-      
-Encrypted Response Back
-
-      ↓
-      
-Client Device
-
-
 -------------------Installation-----------------------------
 
 Clone Repository
