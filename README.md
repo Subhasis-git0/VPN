@@ -1,4 +1,5 @@
 ------------Secure Proxy-Based VPN System----------------
+
 A secure proxy-based VPN system built using Python that demonstrates core VPN concepts such as encrypted tunneling, hybrid cryptography, proxy-based traffic routing, and cross-network communication.
 
 This project uses a hybrid encryption model:
@@ -11,6 +12,7 @@ The server acts as an intermediary proxy between the client and the internet, se
 Global accessibility is achieved using ngrok, allowing clients from different networks and devices to connect to the locally hosted VPN server.
 
 ------------------Features------------------------------
+
 Hybrid Encryption (RSA + AES)
 Proxy-Based Secure Communication
 Client-Server Architecture
@@ -21,6 +23,7 @@ Multi-Client Support
 Secure Key Exchange Mechanism
 
 ------------------How It Works-------------------------
+
 The client requests the server's RSA public key.
 The client generates an AES session key.
 The AES key is encrypted using the server’s RSA public key.
@@ -31,6 +34,7 @@ The server decrypts the request, forwards it to the target website, receives the
 The client decrypts and displays the response securely.
 
 --------------------Architecture------------------------
+
 Client Device
       ↓
 Encrypted HTTP Request
@@ -46,6 +50,7 @@ Encrypted Response Back
 Client Device
 
 ------------------Project Structure-----------------------
+
 VPN/
 │
 ├── server.py          # VPN server
@@ -56,6 +61,7 @@ VPN/
 └── README.md
 
 -------------------Installation-----------------------------
+
 Clone Repository
   git clone https://github.com/your-username/secure-vpn.git
   cd secure-vpn
@@ -80,6 +86,7 @@ Dashboard
   https://your-ngrok-url.ngrok-free.dev/dashboard
 
 ---------------------Limitations-----------------------
+
 This project is a proxy-based VPN demonstration and not a full system-level VPN like:
 
 OpenVPN
