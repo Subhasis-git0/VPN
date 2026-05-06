@@ -1,34 +1,39 @@
-import socket
-from encryption import encrypt, decrypt
+import requests
 from cryptography.fernet import Fernet
 from rsa_utils import load_public_key, encrypt_with_public_key
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('10.80.17.237', 9191))
+BASE_URL = "https://cut-spider-tightwad.ngrok-free.dev"
 
-public_key_data = client.recv(2048)
+print("Step 1: Getting public key...")
+public_key_data = requests.get(BASE_URL + "/get_key").content
 public_key = load_public_key(public_key_data)
 
+print("Step 2: Generating session key...")
 session_key = Fernet.generate_key()
-
-encrypted_key = encrypt_with_public_key(public_key, session_key)
-
-print("Sending request...")
-
-client.sendall(encrypted_key)
-
 cipher = Fernet(session_key)
 
-http_request = b"""GET / HTTP/1.1\r\nHost: example.com\r\nUser-Agent: Mozilla/5.0\r\nAccept: text/html\r\nConnection: close\r\n\r\n"""
+print("Step 3: Sending encrypted session key...")
+client_id = requests.post(
+    BASE_URL + "/connect",
+    data=encrypt_with_public_key(public_key, session_key),
+    timeout=5
+).text
 
-client.sendall(cipher.encrypt(http_request))
+print("Client ID:", client_id)
 
-response = client.recv(4096)
+print("Step 4: Sending encrypted request...")
+http_request = b"""GET / HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n"""
 
-print("Received encrypted response:", response)
+encrypted_request = cipher.encrypt(http_request)
 
-data = cipher.decrypt(response)
+response = requests.post(
+    BASE_URL + f"/request/{client_id}",
+    data=encrypted_request,
+    timeout=10
+).content
 
-print("response from internet:\n")
-print(data.decode(errors='ignore'))
-client.close()
+print("Step 5: Decrypting response...")
+decrypted = cipher.decrypt(response)
+
+print("\n===== RESPONSE =====\n")
+print(decrypted.decode(errors="ignore"))

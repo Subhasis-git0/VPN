@@ -1,66 +1,109 @@
-import socket 
-import threading
-from encryption import encrypt, decrypt
+from flask import Flask, request
 from cryptography.fernet import Fernet
-from rsa_utils import decrypt_with_private_key, generate_keys, serialize_public_key, load_private_key
+from rsa_utils import decrypt_with_private_key, generate_keys, serialize_public_key
+
+import socket
+from datetime import datetime
+
+app = Flask(__name__)
 
 private_key, public_key = generate_keys()
 
+session_keys = {}
+
+# 📊 Stats for dashboard
 stats = {
-    "connections": 0,
-    "data": 0
+    "total_requests": 0,
+    "total_data": 0,
+    "clients": 0,
+    "logs": []
 }
 
-def handle_client(client_socket, addr):
-    print("Client connected:", addr)
+# 🔑 Send public key
+@app.route("/get_key", methods=["GET"])
+def get_key():
+    return serialize_public_key(public_key)
 
-    try:
-        # Send the server's public key first, then receive the encrypted session key.
-        client_socket.sendall(serialize_public_key(public_key))
-        print("Sent public key to client")
+# 🔐 Client connects (key exchange)
+@app.route("/connect", methods=["POST"])
+def connect():
+    print("➡️ Received /connect request")
 
-        encrypted_key = client_socket.recv(1024)
-        session_key = decrypt_with_private_key(private_key, encrypted_key)
-        print("Received encrypted session key")
+    encrypted_key = request.data
+    print("Encrypted key received")
 
-        cipher = Fernet(session_key)
+    session_key = decrypt_with_private_key(private_key, encrypted_key)
+    print("Session key decrypted")
 
-        encrypted_data = client_socket.recv(4096)
-        request = cipher.decrypt(encrypted_data)
-        print("Received and decrypted client request")
+    client_id = str(len(session_keys))
+    session_keys[client_id] = Fernet(session_key)
 
+    stats["clients"] += 1
 
-        remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        remote.connect(('example.com', 80))
-        remote.sendall(request)
+    print("Client registered:", client_id)
 
-        response = b""
-        while True:
-            chuck = remote.recv(4096)
-            if not chuck:
-                break
-            response += chuck
+    return client_id
 
-        client_socket.sendall(cipher.encrypt(response))
-        remote.close()
-        client_socket.close()
+# 🌐 Handle request
+@app.route("/request/<client_id>", methods=["POST"])
+def handle_request(client_id):
+    cipher = session_keys[client_id]
 
-    except Exception as e:
-        print("Error:", e)
-        client_socket.close()
+    encrypted_data = request.data
+    request_data = cipher.decrypt(encrypted_data)
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(('0.0.0.0', 9191))
-server.listen(5)
+    # 📊 Update stats
+    stats["total_requests"] += 1
+    stats["total_data"] += len(request_data)
 
-print('VPN server running on port 9191...')
+    stats["logs"].append({
+        "client": client_id,
+        "size": len(request_data),
+        "time": datetime.now().strftime("%H:%M:%S")
+    })
 
-while True:
-    client_socket, addr = server.accept()
-    
-    thread = threading.Thread(target=handle_client, args=(client_socket, addr))
-    thread.start()
+    # 🌍 Connect to website
+    remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    remote.connect(('example.com', 80))
+    remote.sendall(request_data)
 
+    response = b""
+    while True:
+        chunk = remote.recv(4096)
+        if not chunk:
+            break
+        response += chunk
 
- 
+    remote.close()
+
+    encrypted_response = cipher.encrypt(response)
+    return encrypted_response
+
+# 📊 DASHBOARD ROUTE (🔥 MAIN FEATURE)
+@app.route("/dashboard")
+def dashboard():
+    logs_html = "".join([
+        f"<li>Client {log['client']} | {log['size']} bytes | {log['time']}</li>"
+        for log in stats["logs"][-10:]
+    ])
+
+    return f"""
+    <html>
+    <head>
+        <title>VPN Dashboard</title>
+    </head>
+    <body>
+        <h1>🔐 VPN Dashboard</h1>
+        <p><b>Total Requests:</b> {stats['total_requests']}</p>
+        <p><b>Total Data:</b> {stats['total_data']} bytes</p>
+        <p><b>Connected Clients:</b> {stats['clients']}</p>
+
+        <h3>Recent Activity:</h3>
+        <ul>
+            {logs_html}
+        </ul>
+    </body>
+    </html>
+    """
+
+app.run(host="0.0.0.0", port=8080)
